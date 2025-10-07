@@ -42,7 +42,7 @@ An interactive web application analyzing backcountry safety through spatial data
 ## 🎬 Demo
 
 ### **Live Demo**
-> 🔗 [View Live Application](https://your-username.github.io/backcountry-safety-net) _(Update this link after deployment)_
+> 🔗 [View Live Application](https://your-username.github.io/backcountry-safety-net)
 
 ### **Screenshots**
 
