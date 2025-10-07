@@ -16,6 +16,12 @@ GIS-based Recreation Risk Assessment web application for Pike National Forest & 
 - WeatherAPI.com for live weather data
 
 ## Recent Changes
+- 2025-10-07: Mobile responsiveness improvements
+  - Added comprehensive mobile CSS media queries for all pages
+  - Optimized layouts for tablet (768px) and mobile (480px) viewports
+  - Made all grids, navigation, and content mobile-friendly
+  - Updated all 5 trail detail pages with mobile styles
+  - Desktop functionality and styling fully preserved
 - 2025-10-07: Initial Replit setup completed
   - Installed Python 3.11 and Flask dependencies
   - Created config.js with Weather API key
