@@ -31,9 +31,10 @@ wheels/
 *~
 .DS_Store
 
-# Environment
+# Environment & Configuration
 .env
 .env.local
+config.js
 
 # Logs
 *.log

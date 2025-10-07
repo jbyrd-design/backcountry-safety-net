@@ -198,6 +198,7 @@
     </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="config.js"></script>
     <script>
         const map = L.map('trailMap').setView([39.4156, -105.4192], 13);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -254,7 +255,7 @@
         
         // Weather API for high-elevation trail
         async function fetchWeather() {
-            const apiKey = 'ab849237aefc4282b42181256251909';
+            const apiKey = CONFIG.WEATHER_API_KEY;
             try {
                 const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=39.4156,-105.4192&days=3`);
                 const data = await response.json();

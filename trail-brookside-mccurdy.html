@@ -173,6 +173,7 @@
     </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="config.js"></script>
     <script>
         // Trail coordinates
         const trailCoords = { lat: 39.2806, lon: -105.5067 };
@@ -222,7 +223,7 @@
         
         // Weather API Integration
         async function fetchWeather() {
-            const apiKey = 'ab849237aefc4282b42181256251909';
+            const apiKey = CONFIG.WEATHER_API_KEY;
             const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${trailCoords.lat},${trailCoords.lon}&days=3&aqi=no`;
             
             try {

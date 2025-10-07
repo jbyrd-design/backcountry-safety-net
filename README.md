@@ -80,7 +80,18 @@ _Data visualizations showing risk distribution and factors_
    cd backcountry-safety-net
    ```
 
-2. **Option A: Simple HTTP Server (Recommended for Testing)**
+2. **Set up API configuration**
+   ```bash
+   # Copy the example config file
+   cp config.example.js config.js
+   ```
+   
+   Then edit `config.js` and add your WeatherAPI key:
+   - Get a free key at: [weatherapi.com/signup.aspx](https://www.weatherapi.com/signup.aspx)
+   - Replace `YOUR_WEATHERAPI_KEY_HERE` with your actual key
+   - The `config.js` file is gitignored and won't be committed
+
+3. **Option A: Simple HTTP Server (Recommended for Testing)**
    ```bash
    python3 -m http.server 8000
    ```

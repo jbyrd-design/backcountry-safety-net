@@ -435,6 +435,9 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
+    <!-- Configuration -->
+    <script src="config.js"></script>
+    
     <script>
         // Initialize Trail Map
         const trailMap = L.map('trailMap').setView([39.3847, -105.4483], 12);
@@ -526,7 +529,7 @@
         const trailCoords = { lat: 39.3347, lon: -105.4983 };
         
         async function fetchWeather() {
-            const apiKey = 'ab849237aefc4282b42181256251909';
+            const apiKey = CONFIG.WEATHER_API_KEY;
             const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${trailCoords.lat},${trailCoords.lon}&days=3&aqi=no`;
             
             try {
