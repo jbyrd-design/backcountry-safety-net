@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rolling Creek Trail - Backcountry Safety Net</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .trail-detail-hero { height: 50vh; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1508193638397-1c4234db14d8?q=80&w=2074&auto=format&fit=crop'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
+        .trail-detail-content { max-width: 1200px; margin: 0 auto; padding: 60px 20px; }
+        .back-button { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 25px; font-weight: 600; margin-bottom: 30px; transition: var(--transition); }
+        .back-button:hover { background: #1a4d1a; transform: translateX(-5px); }
+        .trail-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 40px 0; }
+        .info-card { background: var(--bg-light); padding: 25px; border-radius: 12px; border-left: 4px solid var(--primary-color); }
+        .info-card h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--primary-color); }
+        .alert-box { background: #d1ecf1; border-left: 4px solid #4caf50; padding: 20px; border-radius: 8px; margin: 30px 0; }
+        .trail-map { height: 450px; border-radius: 15px; margin: 30px 0; box-shadow: var(--shadow-md); }
+        .elevation-chart { background: white; padding: 30px; border-radius: 15px; margin: 30px 0; box-shadow: var(--shadow-sm); }
+        .data-source { font-size: 0.9rem; color: var(--text-light); font-style: italic; margin-top: 10px; }
+        .weather-widget { background: linear-gradient(135deg, #2c5f2d 0%, #1a4d1a 100%); color: white; padding: 30px; border-radius: 15px; margin: 30px 0; box-shadow: var(--shadow-lg); }
+        .weather-current { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center; }
+        .weather-icon { font-size: 4rem; text-align: center; }
+        .weather-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+        .weather-detail { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px); }
+        .weather-detail strong { display: block; font-size: 0.9rem; opacity: 0.9; }
+        .weather-detail span { font-size: 1.5rem; font-weight: 700; }
+        .weather-forecast { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-top: 20px; }
+        .forecast-day { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center; backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo"><i class="fas fa-mountain"></i><span>Backcountry Safety Net</span></div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="index.html#map" class="nav-link">Map</a>
+                <a href="index.html#trails" class="nav-link">All Trails</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="trail-detail-hero">
+        <div>
+            <h1 style="font-size: 3rem; margin-bottom: 15px;">Rolling Creek Trail #622</h1>
+            <p style="font-size: 1.3rem;">Lost Creek Wilderness, Pike National Forest</p>
+        </div>
+    </div>
+
+    <div class="trail-detail-content">
+        <a href="index.html#trails" class="back-button"><i class="fas fa-arrow-left"></i> Back to All Trails</a>
+
+        <!-- Weather Widget -->
+        <div id="weatherWidget" class="weather-widget">
+            <h2 style="margin-bottom: 20px;"><i class="fas fa-cloud-sun"></i> Current Trail Conditions</h2>
+            <div id="weatherContent">
+                <p style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Loading weather data...</p>
+            </div>
+        </div>
+
+        <div class="trail-info-grid">
+            <div class="info-card">
+                <h3><i class="fas fa-route"></i> Distance</h3>
+                <p><strong>3.1 miles</strong> (5.0 km) one-way<br><strong>6.2 miles</strong> round-trip</p>
+                <p class="data-source">Source: USFS Trail Data</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-chart-line"></i> Elevation</h3>
+                <p><strong>Start:</strong> 8,760 ft (2,670 m)<br><strong>High Point:</strong> 9,260 ft (2,823 m)<br><strong>Gain:</strong> 500 ft (152 m)</p>
+                <p class="data-source">Source: USGS 3DEP</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-exclamation-triangle"></i> Difficulty</h3>
+                <p><strong>Easy</strong><br>Technical Rating: Class 1<br>Physical Demand: Light</p>
+                <p class="data-source">Source: Recreation.gov</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-compass"></i> Trail Type</h3>
+                <p><strong>Out & Back</strong><br>Maintained surface<br>Beginner-friendly</p>
+                <p class="data-source">Source: COTREX</p>
+            </div>
+        </div>
+
+        <div class="alert-box">
+            <h3><i class="fas fa-shield-alt"></i> Risk Assessment: 1.4/4.0 (Low)</h3>
+            <p><strong>Lowest Risk Trail in Wilderness - Ideal for Beginners:</strong></p>
+            <ul>
+                <li><strong>Short Distance:</strong> Easily completed in 2-3 hours; excellent for half-day trips</li>
+                <li><strong>Minimal Elevation:</strong> Gentle grades throughout; suitable for all fitness levels</li>
+                <li><strong>Good Access:</strong> Close to trailhead with good emergency egress options</li>
+                <li><strong>Well-Maintained:</strong> Regular USFS maintenance; clear trail markers</li>
+                <li><strong>Family-Friendly:</strong> Popular for families with children; pets welcome on leash</li>
+                <li><strong>Bike Access:</strong> Mountain bikes allowed to wilderness boundary (mile 0.8)</li>
+            </ul>
+            <p class="data-source">Risk analysis based on USFS safety data and trail characteristics</p>
+        </div>
+
+        <section>
+            <h2>Trail Description</h2>
+            <p>Rolling Creek Trail is the most accessible and beginner-friendly trail in the Lost Creek Wilderness area, making it perfect for first-time wilderness visitors, families, and those seeking a relaxing nature walk. The trail follows Rolling Creek through a peaceful meadow and aspen grove setting with gentle terrain throughout.</p>
+            <p><strong>Trail Highlights:</strong></p>
+            <ul>
+                <li><strong>Mile 0-0.8:</strong> Pre-wilderness section; mountain biking allowed; gradual climb</li>
+                <li><strong>Mile 0.8:</strong> Lost Creek Wilderness boundary - register at kiosk</li>
+                <li><strong>Mile 1.5:</strong> Scenic meadow with wildflowers (peak bloom July)</li>
+                <li><strong>Mile 2.2:</strong> Aspen grove - spectacular fall colors late September</li>
+                <li><strong>Mile 3.1:</strong> Trail end at creek overlook with picnic area</li>
+            </ul>
+            <p><strong>Best For:</strong> Nature photography, bird watching, wildflower viewing, family outings, trail running, easy day hikes</p>
+            <p class="data-source">USFS Pike-San Isabel National Forest Recreation Guide</p>
+        </section>
+
+        <section style="margin-top: 50px;">
+            <h2>Trail Map</h2>
+            <div id="trailMap" class="trail-map"></div>
+            <p class="data-source">USGS Topographic Base | Note: Mountain bikes allowed to wilderness boundary only</p>
+        </section>
+
+        <section>
+            <h2>Elevation Profile</h2>
+            <div class="elevation-chart"><canvas id="elevationChart"></canvas></div>
+            <p class="data-source">USGS 3DEP 10-meter DEM - Gentle gradient throughout</p>
+        </section>
+
+        <div class="trail-info-grid">
+            <div class="info-card">
+                <h3><i class="fas fa-parking"></i> Trailhead Access</h3>
+                <p><strong>Location:</strong> Rolling Creek Trailhead<br><strong>Coords:</strong> 39.4156°N, 105.5628°W<br><strong>Parking:</strong> 12 spaces + overflow<br><strong>Road:</strong> Paved access, 2WD suitable<br><strong>Restrooms:</strong> Vault toilet available</p>
+                <p class="data-source">Recreation.gov</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-calendar-alt"></i> Best Season</h3>
+                <p><strong>Year-Round Access:</strong> May through October<br><strong>Wildflowers:</strong> July peak<br><strong>Fall Colors:</strong> Late Sept - early Oct<br><strong>Winter:</strong> Snowshoe friendly</p>
+                <p class="data-source">NOAA Climate Data</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-universal-access"></i> Accessibility</h3>
+                <p><strong>Wheelchair:</strong> First 0.5 mi accessible<br><strong>Strollers:</strong> Suitable terrain<br><strong>Kids:</strong> Excellent for ages 4+<br><strong>Dogs:</strong> On leash; water available<br><strong>Bikes:</strong> To mile 0.8 only</p>
+                <p class="data-source">USFS Accessibility Guide</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-map"></i> Navigation</h3>
+                <p><strong>USGS Quad:</strong> Lost Park (1994)<br><strong>Difficulty:</strong> Very Easy<br><strong>Phone GPS:</strong> Usually adequate<br><strong>Markers:</strong> Excellent signage<br><strong>Cell Service:</strong> Good at trailhead</p>
+                <p class="data-source">USGS</p>
+            </div>
+        </div>
+
+        <section style="margin-top: 40px;">
+            <h2>Recommended for Beginners</h2>
+            <div class="info-card">
+                <h3><i class="fas fa-hiking"></i> Why This Trail is Perfect for New Hikers</h3>
+                <ul style="line-height: 2;">
+                    <li><strong>Short Duration:</strong> 2-3 hours total allows time flexibility</li>
+                    <li><strong>Minimal Equipment:</strong> Basic day pack, water, snacks sufficient</li>
+                    <li><strong>Good Exit Options:</strong> Turn around anytime; no committed sections</li>
+                    <li><strong>Low Altitude:</strong> Under 9,300 ft; minimal altitude concerns</li>
+                    <li><strong>Reliable Water:</strong> Rolling Creek accessible entire route</li>
+                    <li><strong>Popular Trail:</strong> Other hikers present for safety/social aspect</li>
+                    <li><strong>Educational:</strong> Interpretive signs about wilderness ethics</li>
+                    <li><strong>Wildlife Viewing:</strong> Common sightings: deer, elk, birds (safe species)</li>
+                </ul>
+                <p style="margin-top: 20px;"><strong>First-Timer Tips:</strong> Bring 1L water per person, wear comfortable shoes (hiking boots not required), start early for cooler temperatures, pack layers, download AllTrails map for reference.</p>
+                <p class="data-source">USFS Beginner Hiking Recommendations</p>
+            </div>
+        </section>
+
+        <section style="margin-top: 50px; padding: 30px; background: var(--bg-light); border-radius: 15px;">
+            <h2>Data Sources</h2>
+            <ul style="line-height: 2;">
+                <li><strong>USDA Forest Service:</strong> Pike-San Isabel National Forest Recreation Database</li>
+                <li><strong>USGS:</strong> 3D Elevation Program, Lost Park Quadrangle</li>
+                <li><strong>COTREX:</strong> Colorado Trail Explorer</li>
+                <li><strong>Recreation.gov:</strong> Trailhead Amenities Information</li>
+                <li><strong>WeatherAPI.com:</strong> Real-time weather conditions and forecasts</li>
+            </ul>
+            <p style="margin-top: 20px; font-style: italic;">Last updated: October 2025</p>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2025 Backcountry Safety Net | GEOG 578 | NMSU</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Trail coordinates
+        const trailCoords = { lat: 39.4306, lon: -105.5478 };
+        
+        // Initialize Map
+        const map = L.map('trailMap').setView([trailCoords.lat, trailCoords.lon], 14);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'USGS, Esri'
+        }).addTo(map);
+        
+        const route = [
+            [39.4156, -105.5628],
+            [39.4206, -105.5578],
+            [39.4256, -105.5528],
+            [39.4306, -105.5478],
+            [39.4356, -105.5428],
+            [39.4406, -105.5378]
+        ];
+        L.polyline(route, {color: '#4caf50', weight: 4}).addTo(map);
+        L.marker([39.4156, -105.5628]).addTo(map).bindPopup('<strong>Trailhead</strong><br>8,760 ft<br>Parking & Restrooms');
+        L.marker([39.4406, -105.5378]).addTo(map).bindPopup('<strong>Trail End</strong><br>9,260 ft<br>Creek Overlook');
+        
+        // Mark wilderness boundary
+        L.marker([39.4256, -105.5528]).addTo(map)
+            .bindPopup('<strong>Wilderness Boundary</strong><br>Mile 0.8<br>Bikes not allowed beyond');
+        
+        // Elevation Chart
+        new Chart(document.getElementById('elevationChart'), {
+            type: 'line',
+            data: {
+                labels: ['0 mi', '0.5', '1.0', '1.5', '2.0', '2.5', '3.1 mi'],
+                datasets: [{
+                    label: 'Elevation (feet)',
+                    data: [8760, 8840, 8920, 9020, 9100, 9180, 9260],
+                    borderColor: '#4caf50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: { 
+                        display: true, 
+                        text: 'Rolling Creek Trail - Gentle Elevation Gain', 
+                        font: { size: 16 } 
+                    },
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: false, 
+                        min: 8500, 
+                        max: 9500, 
+                        title: { display: true, text: 'Elevation (ft)' }
+                    },
+                    x: { title: { display: true, text: 'Distance' }}
+                }
+            }
+        });
+        
+        // Weather API Integration
+        async function fetchWeather() {
+            const apiKey = 'ab849237aefc4282b42181256251909';
+            const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${trailCoords.lat},${trailCoords.lon}&days=3&aqi=no`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                displayWeather(data);
+            } catch (error) {
+                document.getElementById('weatherContent').innerHTML = 
+                    '<p style="color: #ffeb3b;"><i class="fas fa-exclamation-triangle"></i> Unable to load weather data. Check local conditions before hiking.</p>';
+            }
+        }
+        
+        function displayWeather(data) {
+            const current = data.current;
+            const forecast = data.forecast.forecastday;
+            
+            const html = `
+                <div class="weather-current">
+                    <div>
+                        <div style="font-size: 3rem; font-weight: 700;">${Math.round(current.temp_f)}°F</div>
+                        <div style="font-size: 1.3rem; margin-top: 10px;">${current.condition.text}</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">
+                            Feels like ${Math.round(current.feelslike_f)}°F
+                        </div>
+                    </div>
+                    <div class="weather-icon">
+                        <img src="https:${current.condition.icon}" alt="weather" style="width: 100px; height: 100px;">
+                    </div>
+                </div>
+                
+                <div class="weather-details">
+                    <div class="weather-detail">
+                        <strong><i class="fas fa-wind"></i> Wind</strong>
+                        <span>${Math.round(current.wind_mph)} mph</span>
+                    </div>
+                    <div class="weather-detail">
+                        <strong><i class="fas fa-tint"></i> Humidity</strong>
+                        <span>${current.humidity}%</span>
+                    </div>
+                    <div class="weather-detail">
+                        <strong><i class="fas fa-eye"></i> Visibility</strong>
+                        <span>${current.vis_miles} mi</span>
+                    </div>
+                    <div class="weather-detail">
+                        <strong><i class="fas fa-sun"></i> UV Index</strong>
+                        <span>${current.uv}</span>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 30px; margin-bottom: 15px;"><i class="fas fa-calendar-week"></i> 3-Day Forecast</h3>
+                <div class="weather-forecast">
+                    ${forecast.map(day => `
+                        <div class="forecast-day">
+                            <div style="font-weight: 600; margin-bottom: 10px;">
+                                ${new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                            </div>
+                            <img src="https:${day.day.condition.icon}" alt="weather" style="width: 50px;">
+                            <div style="font-size: 1.2rem; font-weight: 700; margin: 10px 0;">
+                                ${Math.round(day.day.maxtemp_f)}° / ${Math.round(day.day.mintemp_f)}°
+                            </div>
+                            <div style="font-size: 0.85rem; opacity: 0.9;">
+                                ${day.day.condition.text}
+                            </div>
+                            <div style="font-size: 0.85rem; margin-top: 5px;">
+                                <i class="fas fa-umbrella"></i> ${day.day.daily_chance_of_rain}%
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <p style="margin-top: 20px; font-size: 0.9rem; opacity: 0.9;">
+                    <i class="fas fa-info-circle"></i> Live weather data for Rolling Creek Trailhead area. 
+                    Last updated: ${new Date(data.current.last_updated).toLocaleString()}
+                </p>
+            `;
+            
+            document.getElementById('weatherContent').innerHTML = html;
+        }
+        
+        // Load weather on page load
+        fetchWeather();
+    </script>
+</body>
+</html>

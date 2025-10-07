@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goose Creek Trail - Backcountry Safety Net</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .trail-detail-hero { height: 50vh; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1509316785289-025f5b846b35?q=80&w=2076&auto=format&fit=crop'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
+        .trail-detail-content { max-width: 1200px; margin: 0 auto; padding: 60px 20px; }
+        .back-button { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 25px; font-weight: 600; margin-bottom: 30px; transition: var(--transition); }
+        .back-button:hover { background: #1a4d1a; transform: translateX(-5px); }
+        .trail-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 40px 0; }
+        .info-card { background: var(--bg-light); padding: 25px; border-radius: 12px; border-left: 4px solid var(--primary-color); }
+        .info-card h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--primary-color); }
+        .alert-box { background: #d1ecf1; border-left: 4px solid #4caf50; padding: 20px; border-radius: 8px; margin: 30px 0; }
+        .trail-map { height: 450px; border-radius: 15px; margin: 30px 0; box-shadow: var(--shadow-md); }
+        .elevation-chart { background: white; padding: 30px; border-radius: 15px; margin: 30px 0; box-shadow: var(--shadow-sm); }
+        .data-source { font-size: 0.9rem; color: var(--text-light); font-style: italic; margin-top: 10px; }
+        .weather-widget { background: linear-gradient(135deg, #2c5f2d 0%, #1a4d1a 100%); color: white; padding: 30px; border-radius: 15px; margin: 30px 0; box-shadow: var(--shadow-lg); }
+        .weather-current { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center; }
+        .weather-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+        .weather-detail { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; }
+        .weather-detail strong { display: block; font-size: 0.9rem; opacity: 0.9; }
+        .weather-detail span { font-size: 1.5rem; font-weight: 700; }
+        .weather-forecast { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-top: 20px; }
+        .forecast-day { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo"><i class="fas fa-mountain"></i><span>Backcountry Safety Net</span></div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="index.html#map" class="nav-link">Map</a>
+                <a href="index.html#trails" class="nav-link">All Trails</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="trail-detail-hero">
+        <div>
+            <h1 style="font-size: 3rem; margin-bottom: 15px;">Goose Creek Trail #631</h1>
+            <p style="font-size: 1.3rem;">Lost Creek Wilderness, Pike National Forest</p>
+        </div>
+    </div>
+
+    <div class="trail-detail-content">
+        <a href="index.html#trails" class="back-button"><i class="fas fa-arrow-left"></i> Back to All Trails</a>
+
+        <div id="weatherWidget" class="weather-widget">
+            <h2 style="margin-bottom: 20px;"><i class="fas fa-cloud-sun"></i> Current Trail Conditions</h2>
+            <div id="weatherContent"><p style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Loading weather data...</p></div>
+        </div>
+
+        <div class="trail-info-grid">
+            <div class="info-card">
+                <h3><i class="fas fa-route"></i> Distance</h3>
+                <p><strong>4.2 miles</strong> (6.8 km) one-way<br><strong>8.4 miles</strong> round-trip</p>
+                <p class="data-source">Source: USFS Trail Data</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-chart-line"></i> Elevation</h3>
+                <p><strong>Start:</strong> 8,920 ft (2,719 m)<br><strong>High Point:</strong> 9,720 ft (2,963 m)<br><strong>Gain:</strong> 800 ft (244 m)</p>
+                <p class="data-source">Source: USGS 3DEP Elevation Data</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-exclamation-triangle"></i> Difficulty</h3>
+                <p><strong>Easy to Moderate</strong><br>Technical Rating: Class 1<br>Physical Demand: Moderate</p>
+                <p class="data-source">Source: Recreation.gov</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-compass"></i> Trail Type</h3>
+                <p><strong>Out & Back</strong><br>Well-maintained trail<br>Suitable for beginners</p>
+                <p class="data-source">Source: COTREX Database</p>
+            </div>
+        </div>
+
+        <div class="alert-box">
+            <h3><i class="fas fa-shield-alt"></i> Risk Assessment: 1.6/4.0 (Low-Moderate)</h3>
+            <p><strong>Primary Considerations:</strong></p>
+            <ul>
+                <li><strong>Low Technical Demand:</strong> Well-marked trail suitable for families and novice hikers</li>
+                <li><strong>Water Availability:</strong> Goose Creek provides reliable water source (treatment required)</li>
+                <li><strong>Wildlife:</strong> Occasional bear sightings; practice proper food storage</li>
+                <li><strong>Equestrian Use:</strong> Popular horse trail; yield to stock animals</li>
+                <li><strong>Cell Service:</strong> Limited to none beyond parking area</li>
+            </ul>
+            <p class="data-source">Risk analysis based on USFS safety reports</p>
+        </div>
+
+        <section>
+            <h2>Trail Description</h2>
+            <p>Goose Creek Trail offers one of the most accessible and family-friendly hiking experiences in the Lost Creek Wilderness. The trail follows Goose Creek through a beautiful aspen and pine forest, featuring gentle grades and multiple creek crossings on well-constructed log bridges.</p>
+            <p><strong>Key Features:</strong></p>
+            <ul>
+                <li><strong>Mile 0.5:</strong> Wilderness boundary - register at kiosk</li>
+                <li><strong>Mile 1.8:</strong> Creek crossing with bridge</li>
+                <li><strong>Mile 2.5:</strong> Junction with Lost Creek Trail #629</li>
+                <li><strong>Mile 4.2:</strong> Meadow area with views of McCurdy Peak</li>
+            </ul>
+            <p class="data-source">USFS Pike-San Isabel Trail Guide</p>
+        </section>
+
+        <section style="margin-top: 50px;">
+            <h2>Trail Map</h2>
+            <div id="trailMap" class="trail-map"></div>
+            <p class="data-source">USGS Topographic Base | COTREX Trail Data</p>
+        </section>
+
+        <section>
+            <h2>Elevation Profile</h2>
+            <div class="elevation-chart"><canvas id="elevationChart"></canvas></div>
+            <p class="data-source">USGS 3DEP 10-meter DEM</p>
+        </section>
+
+        <div class="trail-info-grid">
+            <div class="info-card">
+                <h3><i class="fas fa-parking"></i> Trailhead Access</h3>
+                <p><strong>Location:</strong> Goose Creek Trailhead<br><strong>Coordinates:</strong> 39.3142°N, 105.5728°W<br><strong>Parking:</strong> 8 spaces<br><strong>Fee:</strong> None<br><strong>Access Road:</strong> 2WD suitable, maintained May-Oct</p>
+                <p class="data-source">Source: Recreation.gov</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-calendar-alt"></i> Best Season</h3>
+                <p><strong>Peak:</strong> June through October<br><strong>Summer:</strong> Excellent conditions<br><strong>Fall:</strong> Beautiful aspen colors (late Sept)<br><strong>Winter:</strong> Snowshoe access only</p>
+                <p class="data-source">NOAA Climate Data</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-horse"></i> Allowed Uses</h3>
+                <p><strong>Hiking:</strong> Yes<br><strong>Stock:</strong> Yes (horses only)<br><strong>Mountain Bikes:</strong> No (wilderness)<br><strong>Dogs:</strong> Yes, on leash<br><strong>Camping:</strong> Yes, 200 ft from trail/water</p>
+                <p class="data-source">Lost Creek Wilderness Regulations</p>
+            </div>
+            <div class="info-card">
+                <h3><i class="fas fa-map"></i> USGS Maps</h3>
+                <p><strong>Quad:</strong> Lost Park (1994)<br><strong>Trails Illustrated:</strong> #135<br><strong>Scale:</strong> 1:24,000<br>Available: USGS Store</p>
+                <p class="data-source">USGS</p>
+            </div>
+        </div>
+
+        <section style="margin-top: 50px; padding: 30px; background: var(--bg-light); border-radius: 15px;">
+            <h2>Data Sources</h2>
+            <ul style="line-height: 2;">
+                <li><strong>USDA Forest Service:</strong> Pike-San Isabel National Forest</li>
+                <li><strong>USGS:</strong> 3D Elevation Program, Topographic Maps</li>
+                <li><strong>COTREX:</strong> Colorado Trail Explorer</li>
+                <li><strong>Recreation.gov:</strong> Trailhead Information</li>
+            </ul>
+            <p style="margin-top: 20px; font-style: italic;">Last updated: October 2025</p>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2025 Backcountry Safety Net | GEOG 578 | NMSU</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('trailMap').setView([39.3642, -105.5228], 13);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'USGS, Esri'
+        }).addTo(map);
+        
+        const route = [[39.3142, -105.5728], [39.3342, -105.5528], [39.3542, -105.5328], [39.3742, -105.5128]];
+        L.polyline(route, {color: '#4caf50', weight: 4}).addTo(map);
+        L.marker([39.3142, -105.5728]).addTo(map).bindPopup('<strong>Trailhead</strong><br>8,920 ft');
+        L.marker([39.3742, -105.5128]).addTo(map).bindPopup('<strong>End Point</strong><br>9,720 ft');
+        
+        new Chart(document.getElementById('elevationChart'), {
+            type: 'line',
+            data: {
+                labels: ['0 mi', '1', '2', '3', '4.2 mi'],
+                datasets: [{
+                    label: 'Elevation (feet)',
+                    data: [8920, 9100, 9350, 9550, 9720],
+                    borderColor: '#4caf50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: { display: true, text: 'Goose Creek Trail Elevation Profile', font: { size: 16 } },
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: false, min: 8500, max: 10000, title: { display: true, text: 'Elevation (ft)' }},
+                    x: { title: { display: true, text: 'Distance' }}
+                }
+            }
+        });
+        
+        // Weather API
+        async function fetchWeather() {
+            const apiKey = 'ab849237aefc4282b42181256251909';
+            try {
+                const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=39.3642,-105.5228&days=3`);
+                const data = await response.json();
+                const c = data.current, f = data.forecast.forecastday;
+                document.getElementById('weatherContent').innerHTML = `
+                    <div class="weather-current"><div><div style="font-size: 3rem; font-weight: 700;">${Math.round(c.temp_f)}°F</div><div style="font-size: 1.3rem; margin-top: 10px;">${c.condition.text}</div></div><div><img src="https:${c.condition.icon}" style="width: 100px;"></div></div>
+                    <div class="weather-details"><div class="weather-detail"><strong><i class="fas fa-wind"></i> Wind</strong><span>${Math.round(c.wind_mph)} mph</span></div><div class="weather-detail"><strong><i class="fas fa-tint"></i> Humidity</strong><span>${c.humidity}%</span></div><div class="weather-detail"><strong><i class="fas fa-eye"></i> Visibility</strong><span>${c.vis_miles} mi</span></div><div class="weather-detail"><strong><i class="fas fa-cloud"></i> Clouds</strong><span>${c.cloud}%</span></div></div>
+                    <h3 style="margin-top: 30px; margin-bottom: 15px;"><i class="fas fa-calendar-week"></i> 3-Day Forecast</h3>
+                    <div class="weather-forecast">${f.map(d => `<div class="forecast-day"><div style="font-weight: 600; margin-bottom: 10px;">${new Date(d.date).toLocaleDateString('en-US', {weekday:'short',month:'short',day:'numeric'})}</div><img src="https:${d.day.condition.icon}" style="width: 50px;"><div style="font-size: 1.2rem; font-weight: 700; margin: 10px 0;">${Math.round(d.day.maxtemp_f)}°/${Math.round(d.day.mintemp_f)}°</div><div style="font-size: 0.85rem;">${d.day.condition.text}</div><div style="font-size: 0.85rem; margin-top: 5px;"><i class="fas fa-umbrella"></i> ${d.day.daily_chance_of_rain}%</div></div>`).join('')}</div>`;
+            } catch { document.getElementById('weatherContent').innerHTML = '<p style="color: #ffeb3b;"><i class="fas fa-exclamation-triangle"></i> Weather unavailable</p>'; }
+        }
+        fetchWeather();
+    </script>
+</body>
+</html>

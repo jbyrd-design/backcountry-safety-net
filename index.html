@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backcountry Safety Net - Recreation Risk Mapping</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-mountain"></i>
+                <span>Backcountry Safety Net</span>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="#home" class="nav-link active">Home</a>
+                <a href="#map" class="nav-link">Interactive Map</a>
+                <a href="#analysis" class="nav-link">Risk Analysis</a>
+                <a href="#trails" class="nav-link">Trails</a>
+                <a href="#about" class="nav-link">About</a>
+            </div>
+            <div class="nav-toggle" id="navToggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">Backcountry Safety Net</h1>
+            <p class="hero-subtitle">Recreation Risk Mapping for Pike National Forest</p>
+            <p class="hero-description">
+                A comprehensive GIS-based risk assessment system integrating terrain, wildfire, 
+                remoteness, and weather data for safer backcountry recreation.
+            </p>
+            <div class="hero-buttons">
+                <a href="#map" class="btn btn-primary">
+                    <i class="fas fa-map-marked-alt"></i> Explore Map
+                </a>
+                <a href="#analysis" class="btn btn-secondary">
+                    <i class="fas fa-chart-line"></i> View Analysis
+                </a>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-mountain stat-icon"></i>
+                    <h3 class="stat-value">119,790</h3>
+                    <p class="stat-label">Acres Analyzed</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-hiking stat-icon"></i>
+                    <h3 class="stat-value">5</h3>
+                    <p class="stat-label">Major Trails</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-chart-area stat-icon"></i>
+                    <h3 class="stat-value">4</h3>
+                    <p class="stat-label">Risk Factors</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-elevation stat-icon"></i>
+                    <h3 class="stat-value">8k-12.4k</h3>
+                    <p class="stat-label">Elevation Range (ft)</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Map Section -->
+    <section id="map" class="map-section">
+        <div class="container-fluid">
+            <h2 class="section-title">Interactive Risk Map</h2>
+            <p class="section-subtitle">Explore the composite risk assessment across Lost Creek Wilderness</p>
+            
+            <div class="map-controls">
+                <div class="layer-controls">
+                    <button class="layer-btn active" data-layer="composite">
+                        <i class="fas fa-layer-group"></i> Composite Risk
+                    </button>
+                    <button class="layer-btn" data-layer="terrain">
+                        <i class="fas fa-mountain"></i> Terrain Risk
+                    </button>
+                    <button class="layer-btn" data-layer="wildfire">
+                        <i class="fas fa-fire"></i> Wildfire Risk
+                    </button>
+                    <button class="layer-btn" data-layer="weather">
+                        <i class="fas fa-cloud-sun"></i> Weather Risk
+                    </button>
+                    <button class="layer-btn" data-layer="remoteness">
+                        <i class="fas fa-compass"></i> Remoteness Risk
+                    </button>
+                </div>
+            </div>
+            
+            <div id="mapContainer" class="map-container"></div>
+            
+            <div class="map-legend">
+                <h4>Risk Level Legend</h4>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #4caf50;"></span>
+                        <span class="legend-label">Low Risk</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ffc107;"></span>
+                        <span class="legend-label">Moderate Risk</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ff9800;"></span>
+                        <span class="legend-label">High Risk</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #f44336;"></span>
+                        <span class="legend-label">Extreme Risk</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Risk Analysis Dashboard -->
+    <section id="analysis" class="analysis-section">
+        <div class="container">
+            <h2 class="section-title">Risk Analysis Dashboard</h2>
+            <p class="section-subtitle">Comprehensive statistical analysis of backcountry risk factors</p>
+            
+            <div class="charts-grid">
+                <!-- Risk Distribution Chart -->
+                <div class="chart-card">
+                    <h3 class="chart-title">Risk Zone Distribution</h3>
+                    <canvas id="riskDistChart"></canvas>
+                </div>
+                
+                <!-- Risk Factors Comparison -->
+                <div class="chart-card">
+                    <h3 class="chart-title">Risk Factors Comparison</h3>
+                    <canvas id="riskFactorsChart"></canvas>
+                </div>
+                
+                <!-- Elevation vs Risk -->
+                <div class="chart-card">
+                    <h3 class="chart-title">Elevation vs Risk</h3>
+                    <canvas id="elevationRiskChart"></canvas>
+                </div>
+                
+                <!-- Seasonal Risk Pattern -->
+                <div class="chart-card">
+                    <h3 class="chart-title">Seasonal Risk Patterns</h3>
+                    <canvas id="seasonalChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trail Information Section -->
+    <section id="trails" class="trails-section">
+        <div class="container">
+            <h2 class="section-title">Trail Risk Profiles</h2>
+            <p class="section-subtitle">Detailed analysis of major trails in the wilderness area</p>
+            
+            <div class="trails-grid">
+                <!-- Trail Card 1 -->
+                <div class="trail-card" data-difficulty="moderate">
+                    <div class="trail-header">
+                        <h3 class="trail-name">Lost Creek Trail</h3>
+                        <span class="trail-badge moderate">Moderate</span>
+                    </div>
+                    <div class="trail-stats">
+                        <div class="trail-stat">
+                            <i class="fas fa-route"></i>
+                            <span>8.5 miles</span>
+                        </div>
+                        <div class="trail-stat">
+                            <i class="fas fa-chart-line"></i>
+                            <span>1,800 ft gain</span>
+                        </div>
+                        <div class="trail-stat">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Risk: 2.3/4</span>
+                        </div>
+                    </div>
+                    <p class="trail-description">
+                        Primary access route with moderate terrain risk. Features seasonal creek 
+                        crossings and moderate elevation gain. Suitable for intermediate hikers.
+                    </p>
+                    <button class="trail-btn" onclick="showTrailDetails('lost-creek')">
+                        View Details <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Trail Card 2 -->
+                <div class="trail-card" data-difficulty="easy">
+                    <div class="trail-header">
+                        <h3 class="trail-name">Goose Creek Trail</h3>
+                        <span class="trail-badge easy">Easy</span>
+                    </div>
+                    <div class="trail-stats">
+                        <div class="trail-stat">
+                            <i class="fas fa-route"></i>
+                            <span>4.2 miles</span>
+                        </div>
+                        <div class="trail-stat">
+                            <i class="fas fa-chart-line"></i>
+                            <span>800 ft gain</span>
+                        </div>
+                        <div class="trail-stat">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Risk: 1.6/4</span>
+                        </div>
+                    </div>
+                    <p class="trail-description">
+                        Lower risk profile suitable for beginners. Well-maintained with good 
+                        access and minimal technical challenges. Family-friendly option.
+                    </p>
+                    <button class="trail-btn" onclick="showTrailDetails('goose-creek')">
+                        View Details <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Trail Card 3 -->
+                <div class="trail-card" data-difficulty="difficult">
+                    <div class="trail-header">
+                        <h3 class="trail-name">Wigwam Trail</h3>
+                        <span class="trail-badge difficult">Difficult</span>
+                    </div>
+                    <div class="trail-stats">
+                        <div class="trail-stat">
+                            <i class="fas fa-route"></i>
+                            <span>6.8 miles</span>
+                        </div>
+                        <div class="trail-stat">
+                            <i class="fas fa-chart-line"></i>
+                            <span>2,600 ft gain</span>
+                        </div>
+                        <div class="trail-stat">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Risk: 3.4/4</span>
+                        </div>
+                    </div>
+                    <p class="trail-description">
+                        Highest risk profile due to technical terrain. Significant elevation 
+                        gain and exposure. Advanced navigation skills required.
+                    </p>
+                    <button class="trail-btn" onclick="showTrailDetails('wigwam')">
+                        View Details <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Trail Card 4 -->
+                <div class="trail-card" data-difficulty="moderate">
+                    <div class="trail-header">
+                        <h3 class="trail-name">Brookside-McCurdy Trail</h3>
+                        <span class="trail-badge moderate">Moderate</span>
+                    </div>
+                    <div class="trail-stats">
+                        <div class="trail-stat">
+                            <i class="fas fa-route"></i>
+                            <span>12.3 miles</span>
+                        </div>
+                        <div class="trail-stat">
+                            <i class="fas fa-chart-line"></i>
+                            <span>2,100 ft gain</span>
+                        </div>
+                        <div class="trail-stat">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Risk: 2.8/4</span>
+                        </div>
+                    </div>
+                    <p class="trail-description">
+                        Longest trail with varied risk conditions. Multi-day backpacking 
+                        considerations. Remote sections requiring self-sufficiency.
+                    </p>
+                    <button class="trail-btn" onclick="showTrailDetails('brookside')">
+                        View Details <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Trail Card 5 -->
+                <div class="trail-card" data-difficulty="easy">
+                    <div class="trail-header">
+                        <h3 class="trail-name">Rolling Creek Trail</h3>
+                        <span class="trail-badge easy">Easy</span>
+                    </div>
+                    <div class="trail-stats">
+                        <div class="trail-stat">
+                            <i class="fas fa-route"></i>
+                            <span>3.1 miles</span>
+                        </div>
+                        <div class="trail-stat">
+                            <i class="fas fa-chart-line"></i>
+                            <span>500 ft gain</span>
+                        </div>
+                        <div class="trail-stat">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Risk: 1.4/4</span>
+                        </div>
+                    </div>
+                    <p class="trail-description">
+                        Lowest risk profile with maintained surfaces. Suitable for families and 
+                        novice hikers. Good emergency access throughout.
+                    </p>
+                    <button class="trail-btn" onclick="showTrailDetails('rolling-creek')">
+                        View Details <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Methodology Section -->
+    <section id="about" class="methodology-section">
+        <div class="container">
+            <h2 class="section-title">Methodology & Data Sources</h2>
+            
+            <p style="max-width: 900px; margin: 0 auto 40px; text-align: center; font-size: 1.1rem; line-height: 1.8; color: #555;">
+                This analysis integrates authoritative datasets from USGS, COTREX, CO-WRA, and NOAA using a <strong>weighted overlay algorithm</strong> to generate a composite risk index. Four key factors—terrain (30%), wildfire potential (25%), remoteness (25%), and weather exposure (20%)—are combined at 30-meter resolution to classify backcountry areas into four risk levels, supporting evidence-based recreation planning.
+            </p>
+            
+            <div class="methodology-grid">
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h3>Data Sources</h3>
+                    <ul class="method-list">
+                        <li><strong>USGS 3DEP:</strong> High-resolution elevation data</li>
+                        <li><strong>COTREX:</strong> Colorado trail network (40,000 miles)</li>
+                        <li><strong>CO-WRA:</strong> Wildfire risk assessment</li>
+                        <li><strong>NOAA:</strong> Weather and climate data</li>
+                    </ul>
+                </div>
+
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <h3>Risk Factors</h3>
+                    <ul class="method-list">
+                        <li><strong>Terrain (30%):</strong> Slope, elevation, aspect</li>
+                        <li><strong>Wildfire (25%):</strong> Fire hazard potential</li>
+                        <li><strong>Remoteness (25%):</strong> Distance from help</li>
+                        <li><strong>Weather (20%):</strong> Exposure risk</li>
+                    </ul>
+                </div>
+
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h3>Analysis Methods</h3>
+                    <ul class="method-list">
+                        <li><strong>Weighted Overlay:</strong> Multi-criteria evaluation</li>
+                        <li><strong>Spatial Resolution:</strong> 30-meter analysis grid</li>
+                        <li><strong>Classification:</strong> 4-level risk zones</li>
+                        <li><strong>Validation:</strong> Literature-based methodology</li>
+                    </ul>
+                </div>
+
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3>Academic Context</h3>
+                    <ul class="method-list">
+                        <li><strong>Course:</strong> GEOG 578 - Advanced GIS</li>
+                        <li><strong>Institution:</strong> NMSU</li>
+                        <li><strong>Framework:</strong> Carver et al. (2013) methodology</li>
+                        <li><strong>Application:</strong> Recreation safety planning</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Backcountry Safety Net</h4>
+                    <p>GIS-based recreation risk assessment for Pike National Forest and Lost Creek Wilderness.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#map">Interactive Map</a></li>
+                        <li><a href="#analysis">Risk Analysis</a></li>
+                        <li><a href="#trails">Trail Information</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Data Sources</h4>
+                    <ul class="footer-links">
+                        <li><a href="https://www.usgs.gov/3d-elevation-program" target="_blank">USGS 3DEP</a></li>
+                        <li><a href="https://data.colorado.gov" target="_blank">COTREX</a></li>
+                        <li><a href="https://coloradoforestatlas.org" target="_blank">CO-WRA</a></li>
+                        <li><a href="https://www.weather.gov" target="_blank">NOAA</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Project Info</h4>
+                    <p><strong>GEOG 578</strong> - Intro to GIS<br>
+                       New Mexico State University<br>
+                       Term Project 2025</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Backcountry Safety Net. Created for educational purposes.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
