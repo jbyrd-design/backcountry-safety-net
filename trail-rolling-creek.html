@@ -76,7 +76,7 @@
 
     <div class="trail-detail-hero">
         <div>
-            <h1 style="font-size: 3rem; margin-bottom: 15px;">Rolling Creek Trail #622</h1>
+            <h1 style="font-size: 3rem; margin-bottom: 15px;">Rolling Creek Trail #663</h1>
             <p style="font-size: 1.3rem;">Lost Creek Wilderness, Pike National Forest</p>
         </div>
     </div>
@@ -95,13 +95,13 @@
         <div class="trail-info-grid">
             <div class="info-card">
                 <h3><i class="fas fa-route"></i> Distance</h3>
-                <p><strong>3.1 miles</strong> (5.0 km) one-way<br><strong>6.2 miles</strong> round-trip</p>
-                <p class="data-source">Source: USFS Trail Data</p>
+                <p><strong>6.4 miles</strong> (10.3 km) total trail length<br><strong>12.8 miles</strong> round-trip</p>
+                <p class="data-source">Source: COTREX Trail Data</p>
             </div>
             <div class="info-card">
                 <h3><i class="fas fa-chart-line"></i> Elevation</h3>
-                <p><strong>Start:</strong> 8,760 ft (2,670 m)<br><strong>High Point:</strong> 9,260 ft (2,823 m)<br><strong>Gain:</strong> 500 ft (152 m)</p>
-                <p class="data-source">Source: USGS 3DEP</p>
+                <p><strong>Low Point:</strong> 8,219 ft (2,505 m)<br><strong>High Point:</strong> 10,659 ft (3,249 m)<br><strong>Total Gain:</strong> 744 ft (227 m)</p>
+                <p class="data-source">Source: USGS 3DEP via COTREX</p>
             </div>
             <div class="info-card">
                 <h3><i class="fas fa-exclamation-triangle"></i> Difficulty</h3>
@@ -110,8 +110,8 @@
             </div>
             <div class="info-card">
                 <h3><i class="fas fa-compass"></i> Trail Type</h3>
-                <p><strong>Out & Back</strong><br>Maintained surface<br>Beginner-friendly</p>
-                <p class="data-source">Source: COTREX</p>
+                <p><strong>Out & Back</strong><br>Dirt surface, well-maintained<br>Hiking & equestrian use</p>
+                <p class="data-source">Source: USFS South Platte Ranger District</p>
             </div>
         </div>
 
@@ -222,30 +222,58 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="config.js"></script>
     <script>
-        // Trail coordinates
+        // Trail coordinates for weather
         const trailCoords = { lat: 39.4306, lon: -105.5478 };
         
         // Initialize Map
-        const map = L.map('trailMap').setView([trailCoords.lat, trailCoords.lon], 14);
+        const map = L.map('trailMap').setView([trailCoords.lat, trailCoords.lon], 11);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'USGS, Esri'
+            attribution: 'USGS, Esri',
+            maxZoom: 16
         }).addTo(map);
         
-        const route = [
-            [39.4156, -105.5628],
-            [39.4206, -105.5578],
-            [39.4256, -105.5528],
-            [39.4306, -105.5478],
-            [39.4356, -105.5428],
-            [39.4406, -105.5378]
-        ];
-        L.polyline(route, {color: '#4caf50', weight: 4}).addTo(map);
-        L.marker([39.4156, -105.5628]).addTo(map).bindPopup('<strong>Trailhead</strong><br>8,760 ft<br>Parking & Restrooms');
-        L.marker([39.4406, -105.5378]).addTo(map).bindPopup('<strong>Trail End</strong><br>9,260 ft<br>Creek Overlook');
-        
-        // Mark wilderness boundary
-        L.marker([39.4256, -105.5528]).addTo(map)
-            .bindPopup('<strong>Wilderness Boundary</strong><br>Mile 0.8<br>Bikes not allowed beyond');
+        // Load actual trail data from GeoJSON
+        console.log('Fetching trail data for Rolling Creek');
+        fetch('data/filtered_trails.geojson')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Total features loaded:', data.features.length);
+                // Filter for Rolling Creek Trail #663 only
+                const rollingCreekFeatures = data.features.filter(f => 
+                    f.properties.trail_num === '663'
+                );
+                console.log('Rolling Creek Trail #663 segments found:', rollingCreekFeatures.length);
+                if (rollingCreekFeatures.length === 0) { console.error('No Rolling Creek Trail features found!'); return; }
+                
+                // Create GeoJSON layer for this trail
+                const trailLayer = L.geoJSON({
+                    type: 'FeatureCollection',
+                    features: rollingCreekFeatures
+                }, {
+                    style: {
+                        color: '#4caf50',  // Easy difficulty color
+                        weight: 5,
+                        opacity: 0.9
+                    },
+                    onEachFeature: function(feature, layer) {
+                        layer.bindPopup(`
+                            <strong>${feature.properties.name}</strong><br>
+                            Trail #${feature.properties.trail_num}<br>
+                            Surface: ${feature.properties.surface}
+                        `);
+                    }
+                }).addTo(map);
+                
+                // Fit map to trail bounds
+                map.fitBounds(trailLayer.getBounds(), { padding: [50, 50] });
+            })
+            .catch(error => {
+                console.error('ERROR loading trail data:', error);
+                alert('Failed to load trail geometry. Check console.');
+            });
         
         // Elevation Chart
         new Chart(document.getElementById('elevationChart'), {

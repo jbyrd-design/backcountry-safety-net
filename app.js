@@ -15,8 +15,8 @@ const studyAreaCenter = [39.4, -105.5];
 const RISK_COLORS = {
     low: '#4caf50',
     moderate: '#ffc107',
-    high: '#ff9800',
-    extreme: '#f44336'
+    high: '#f44336',
+    extreme: '#d32f2f'
 };
 
 // ===================================
@@ -96,8 +96,8 @@ function initializeScrollEffects() {
 // Interactive Map (Leaflet)
 // ===================================
 function initializeMap() {
-    // Initialize map centered on study area
-    map = L.map('mapContainer').setView(studyAreaCenter, 11);
+    // Initialize map centered on study area (zoom 10 to show all trails)
+    map = L.map('mapContainer').setView(studyAreaCenter, 10);
     
     // Add terrain base layer (Esri World Topo Map)
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -133,115 +133,98 @@ function initializeMap() {
 }
 
 function addTrailData() {
-    // Complete trail data for all 5 trails
-    const trails = [
-        {
-            id: 'lost-creek',
-            name: 'Lost Creek Trail #629',
-            coords: [
-                [39.2847, -105.5483], [39.3047, -105.5283], [39.3247, -105.5083],
-                [39.3447, -105.4883], [39.3647, -105.4683], [39.3847, -105.4483]
-            ],
-            difficulty: 'moderate',
-            distance: '8.5 mi',
-            elevation: '+1,800 ft',
-            risk: 2.3
-        },
-        {
-            id: 'goose-creek',
-            name: 'Goose Creek Trail #631',
-            coords: [
-                [39.3142, -105.5728], [39.3342, -105.5528], 
-                [39.3542, -105.5328], [39.3742, -105.5128]
-            ],
-            difficulty: 'easy',
-            distance: '4.2 mi',
-            elevation: '+800 ft',
-            risk: 1.6
-        },
-        {
-            id: 'wigwam',
-            name: 'Wigwam Trail #635',
-            coords: [
-                [39.3456, -105.4892], [39.3656, -105.4692], [39.3856, -105.4492],
-                [39.4056, -105.4292], [39.4256, -105.4092], [39.4456, -105.3892]
-            ],
-            difficulty: 'difficult',
-            distance: '6.8 mi',
-            elevation: '+2,600 ft',
-            risk: 3.4
-        },
-        {
-            id: 'brookside',
-            name: 'Brookside-McCurdy Trail #607',
-            coords: [
-                [39.2156, -105.6242], [39.2356, -105.5942], [39.2556, -105.5642],
-                [39.2756, -105.5342], [39.2956, -105.5042], [39.3156, -105.4742],
-                [39.3356, -105.4442], [39.3456, -105.3892]
-            ],
-            difficulty: 'moderate',
-            distance: '12.3 mi',
-            elevation: '+2,100 ft',
-            risk: 2.8
-        },
-        {
-            id: 'rolling-creek',
-            name: 'Rolling Creek Trail #622',
-            coords: [
-                [39.4156, -105.5628], [39.4206, -105.5578], [39.4256, -105.5528],
-                [39.4306, -105.5478], [39.4356, -105.5428], [39.4406, -105.5378]
-            ],
-            difficulty: 'easy',
-            distance: '3.1 mi',
-            elevation: '+500 ft',
-            risk: 1.4
-        }
-    ];
-    
-    trails.forEach(trail => {
-        const color = trail.difficulty === 'easy' ? RISK_COLORS.low :
-                     trail.difficulty === 'moderate' ? RISK_COLORS.moderate :
-                     RISK_COLORS.high;
-        
-        const polyline = L.polyline(trail.coords, {
-            color: color,
-            weight: 5,
-            opacity: 0.8
-        }).addTo(map);
-        
-        // Hover tooltip
-        polyline.bindTooltip(`
-            <strong>${trail.name}</strong><br>
-            ${trail.distance} • ${trail.elevation}
-        `, {
-            sticky: true
+    // Load trail data from filtered GeoJSON file
+    fetch('data/filtered_trails.geojson?v=' + Date.now())
+        .then(response => response.json())
+        .then(data => {
+            // Trail name to ID mapping for detail pages
+            const trailIdMap = {
+                'Lost Creek Trail': 'lost-creek',
+                'Goose Creek Trail': 'goose-creek',
+                'Wigwam Trail': 'wigwam',
+                'Brookside-McCurdy Trail': 'brookside',
+                'Rolling Creek Trail': 'rolling-creek'
+            };
+            
+            // Risk scores and trail info for each trail
+            const riskScores = {
+                'Lost Creek Trail': 2.3,
+                'Goose Creek Trail': 1.6,
+                'Wigwam Trail': 3.4,
+                'Brookside-McCurdy Trail': 2.8,
+                'Rolling Creek Trail': 1.4
+            };
+            
+            // Trail numbers from COTREX data
+            const trailNumbers = {
+                'Lost Creek Trail': '#1808',
+                'Goose Creek Trail': '#827',
+                'Wigwam Trail': '#609',
+                'Brookside-McCurdy Trail': '#607',
+                'Rolling Creek Trail': '#663'
+            };
+            
+            // Add GeoJSON layer to map
+            L.geoJSON(data, {
+                style: function(feature) {
+                    // Use difficulty color from GeoJSON properties
+                    const color = feature.properties.difficulty_color || RISK_COLORS.moderate;
+                    return {
+                        color: color,
+                        weight: 5,
+                        opacity: 0.8,
+                        lineJoin: 'round',
+                        lineCap: 'round'
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    const props = feature.properties;
+                    const trailName = props.name;
+                    const baseTrailName = trailName.split('#')[0].trim();
+                    const trailId = trailIdMap[baseTrailName] || 'unknown';
+                    const risk = riskScores[baseTrailName] || 'N/A';
+                    
+                    // Hover tooltip
+                    layer.bindTooltip(`
+                        <strong>${trailName}</strong><br>
+                        ${props.distance} • ${props.elevation_gain}
+                    `, {
+                        sticky: true
+                    });
+                    
+                    // Click popup with link to detail page
+                    layer.bindPopup(`
+                        <div style="padding: 10px; min-width: 200px;">
+                            <h4 style="margin: 0 0 10px 0; color: ${props.difficulty_color};">${trailName}</h4>
+                            <p style="margin: 5px 0;"><strong>Distance:</strong> ${props.distance}</p>
+                            <p style="margin: 5px 0;"><strong>Elevation Gain:</strong> ${props.elevation_gain}</p>
+                            <p style="margin: 5px 0;"><strong>Difficulty:</strong> <span style="text-transform: capitalize; color: ${props.difficulty_color}; font-weight: 600;">${props.difficulty}</span></p>
+                            <p style="margin: 5px 0;"><strong>Risk Score:</strong> ${risk}/4.0</p>
+                            ${trailId !== 'unknown' ? `
+                                <a href="trail-${trailId}.html" 
+                                   style="display: inline-block; margin-top: 10px; padding: 8px 16px; background: #2c5f2d; color: white; text-decoration: none; border-radius: 5px; font-weight: 600;">
+                                    View Details →
+                                </a>
+                            ` : ''}
+                        </div>
+                    `);
+                    
+                    // Double-click to navigate to detail page
+                    if (trailId !== 'unknown') {
+                        layer.on('dblclick', function() {
+                            window.location.href = `trail-${trailId}.html`;
+                        });
+                    }
+                }
+            }).addTo(map);
+            
+            console.log(`Loaded ${data.features.length} trail features from GeoJSON`);
+        })
+        .catch(error => {
+            console.error('Error loading trail data:', error);
+            // Fallback: show error message
+            alert('Unable to load trail data. Please check that data/filtered_trails.geojson exists.');
         });
-        
-        // Click popup with link to detail page
-        polyline.bindPopup(`
-            <div style="padding: 10px; min-width: 200px;">
-                <h4 style="margin: 0 0 10px 0; color: #2c5f2d;">${trail.name}</h4>
-                <p style="margin: 5px 0;"><strong>Distance:</strong> ${trail.distance}</p>
-                <p style="margin: 5px 0;"><strong>Elevation Gain:</strong> ${trail.elevation}</p>
-                <p style="margin: 5px 0;"><strong>Difficulty:</strong> <span style="text-transform: capitalize;">${trail.difficulty}</span></p>
-                <p style="margin: 5px 0;"><strong>Risk Score:</strong> ${trail.risk}/4.0</p>
-                <a href="trail-${trail.id}.html" 
-                   style="display: inline-block; margin-top: 10px; padding: 8px 16px; background: #2c5f2d; color: white; text-decoration: none; border-radius: 5px; font-weight: 600;">
-                    View Details →
-                </a>
-            </div>
-        `);
-        
-        // Make trail clickable to navigate to detail page
-        polyline.on('click', function() {
-            // The popup will show, but we also enable direct navigation
-            // Users can either click the button in popup or double-click the trail
-        });
-        
-        polyline.on('dblclick', function() {
-            window.location.href = `trail-${trail.id}.html`;
-        });
-    });
 }
 
 function addRiskZones() {
@@ -307,15 +290,14 @@ function createRiskDistributionChart() {
     new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Low Risk', 'Moderate Risk', 'High Risk', 'Extreme Risk'],
+            labels: ['Low Risk', 'Moderate Risk', 'High Risk'],
             datasets: [{
-                label: 'Risk Zone Distribution',
-                data: [28, 53, 17, 2],
+                label: 'Trail Risk Distribution',
+                data: [40, 40, 20],
                 backgroundColor: [
                     RISK_COLORS.low,
                     RISK_COLORS.moderate,
-                    RISK_COLORS.high,
-                    RISK_COLORS.extreme
+                    RISK_COLORS.high
                 ],
                 borderWidth: 2,
                 borderColor: '#fff'

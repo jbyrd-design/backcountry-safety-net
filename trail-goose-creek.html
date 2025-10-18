@@ -73,7 +73,7 @@
 
     <div class="trail-detail-hero">
         <div>
-            <h1 style="font-size: 3rem; margin-bottom: 15px;">Goose Creek Trail #631</h1>
+            <h1 style="font-size: 3rem; margin-bottom: 15px;">Goose Creek Trail #827</h1>
             <p style="font-size: 1.3rem;">Lost Creek Wilderness, Pike National Forest</p>
         </div>
     </div>
@@ -89,23 +89,23 @@
         <div class="trail-info-grid">
             <div class="info-card">
                 <h3><i class="fas fa-route"></i> Distance</h3>
-                <p><strong>4.2 miles</strong> (6.8 km) one-way<br><strong>8.4 miles</strong> round-trip</p>
-                <p class="data-source">Source: USFS Trail Data</p>
+                <p><strong>22.3 miles</strong> (35.9 km) total trail length<br><strong>Point-to-point or out & back sections</strong></p>
+                <p class="data-source">Source: COTREX Trail Data</p>
             </div>
             <div class="info-card">
                 <h3><i class="fas fa-chart-line"></i> Elevation</h3>
-                <p><strong>Start:</strong> 8,920 ft (2,719 m)<br><strong>High Point:</strong> 9,720 ft (2,963 m)<br><strong>Gain:</strong> 800 ft (244 m)</p>
-                <p class="data-source">Source: USGS 3DEP Elevation Data</p>
+                <p><strong>Low Point:</strong> 8,051 ft (2,454 m)<br><strong>High Point:</strong> 12,356 ft (3,766 m)<br><strong>Total Gain:</strong> 1,311 ft (400 m)</p>
+                <p class="data-source">Source: USGS 3DEP via COTREX</p>
             </div>
             <div class="info-card">
                 <h3><i class="fas fa-exclamation-triangle"></i> Difficulty</h3>
-                <p><strong>Easy to Moderate</strong><br>Technical Rating: Class 1<br>Physical Demand: Moderate</p>
-                <p class="data-source">Source: Recreation.gov</p>
+                <p><strong>Easy</strong><br>Technical Rating: Class 1<br>Physical Demand: Light to Moderate</p>
+                <p class="data-source">Source: COTREX Database</p>
             </div>
             <div class="info-card">
                 <h3><i class="fas fa-compass"></i> Trail Type</h3>
-                <p><strong>Out & Back</strong><br>Well-maintained trail<br>Suitable for beginners</p>
-                <p class="data-source">Source: COTREX Database</p>
+                <p><strong>Point-to-point or Out & Back</strong><br>Dirt surface, well-maintained<br>Hiking & equestrian use (leashed dogs)</p>
+                <p class="data-source">Source: USFS Divide Ranger District</p>
             </div>
         </div>
 
@@ -193,15 +193,54 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="config.js"></script>
     <script>
-        const map = L.map('trailMap').setView([39.3642, -105.5228], 13);
+        const map = L.map('trailMap').setView([39.3642, -105.5228], 11);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'USGS, Esri'
+            attribution: 'USGS, Esri',
+            maxZoom: 16
         }).addTo(map);
         
-        const route = [[39.3142, -105.5728], [39.3342, -105.5528], [39.3542, -105.5328], [39.3742, -105.5128]];
-        L.polyline(route, {color: '#4caf50', weight: 4}).addTo(map);
-        L.marker([39.3142, -105.5728]).addTo(map).bindPopup('<strong>Trailhead</strong><br>8,920 ft');
-        L.marker([39.3742, -105.5128]).addTo(map).bindPopup('<strong>End Point</strong><br>9,720 ft');
+        // Load actual trail data from GeoJSON
+        console.log('Fetching trail data for Goose Creek');
+        fetch('data/filtered_trails.geojson')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Total features loaded:', data.features.length);
+                // Filter for Goose Creek Trail #827 only
+                const gooseCreekFeatures = data.features.filter(f => 
+                    f.properties.trail_num === '827'
+                );
+                console.log('Goose Creek Trail #827 segments found:', gooseCreekFeatures.length);
+                if (gooseCreekFeatures.length === 0) { console.error('No Goose Creek Trail features found!'); return; }
+                
+                // Create GeoJSON layer for this trail
+                const trailLayer = L.geoJSON({
+                    type: 'FeatureCollection',
+                    features: gooseCreekFeatures
+                }, {
+                    style: {
+                        color: '#4caf50',  // Easy difficulty color
+                        weight: 5,
+                        opacity: 0.9
+                    },
+                    onEachFeature: function(feature, layer) {
+                        layer.bindPopup(`
+                            <strong>${feature.properties.name}</strong><br>
+                            Trail #${feature.properties.trail_num}<br>
+                            Surface: ${feature.properties.surface}
+                        `);
+                    }
+                }).addTo(map);
+                
+                // Fit map to trail bounds
+                map.fitBounds(trailLayer.getBounds(), { padding: [50, 50] });
+            })
+            .catch(error => {
+                console.error('ERROR loading trail data:', error);
+                alert('Failed to load trail geometry. Check console.');
+            });
         
         new Chart(document.getElementById('elevationChart'), {
             type: 'line',

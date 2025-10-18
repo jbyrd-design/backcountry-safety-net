@@ -197,7 +197,7 @@
     <!-- Trail Hero -->
     <div class="trail-detail-hero">
         <div>
-            <h1 style="font-size: 3rem; margin-bottom: 15px;">Lost Creek Trail #629</h1>
+            <h1 style="font-size: 3rem; margin-bottom: 15px;">Lost Creek Trail #1808</h1>
             <p style="font-size: 1.3rem;">Lost Creek Wilderness, Pike National Forest</p>
         </div>
     </div>
@@ -220,33 +220,33 @@
         <div class="trail-info-grid">
             <div class="info-card">
                 <h3><i class="fas fa-route"></i> Distance</h3>
-                <p><strong>8.5 miles</strong> (13.7 km) one-way<br>
-                <strong>17 miles</strong> round-trip</p>
-                <p class="data-source">Source: USFS Trail Data</p>
+                <p><strong>8.6 miles</strong> (13.8 km) total trail length<br>
+                <strong>17.2 miles</strong> round-trip</p>
+                <p class="data-source">Source: COTREX Trail Data</p>
             </div>
             
             <div class="info-card">
                 <h3><i class="fas fa-chart-line"></i> Elevation</h3>
-                <p><strong>Start:</strong> 8,840 ft (2,694 m)<br>
-                <strong>High Point:</strong> 10,640 ft (3,243 m)<br>
-                <strong>Gain:</strong> 1,800 ft (549 m)</p>
-                <p class="data-source">Source: USGS Elevation Data</p>
+                <p><strong>Low Point:</strong> 7,566 ft (2,306 m)<br>
+                <strong>High Point:</strong> 10,823 ft (3,299 m)<br>
+                <strong>Total Gain:</strong> 992 ft (302 m)</p>
+                <p class="data-source">Source: USGS 3DEP via COTREX</p>
             </div>
             
             <div class="info-card">
                 <h3><i class="fas fa-exclamation-triangle"></i> Difficulty</h3>
-                <p><strong>Moderate to Difficult</strong><br>
-                Technical Rating: Class 2<br>
-                Physical Demand: Strenuous</p>
-                <p class="data-source">Source: USFS Recreation.gov</p>
+                <p><strong>Moderate</strong><br>
+                Technical Rating: Class 1-2<br>
+                Physical Demand: Moderate</p>
+                <p class="data-source">Source: COTREX Database</p>
             </div>
             
             <div class="info-card">
                 <h3><i class="fas fa-compass"></i> Trail Type</h3>
                 <p><strong>Out & Back</strong><br>
-                Well-maintained dirt trail<br>
-                Some rocky sections</p>
-                <p class="data-source">Source: COTREX Trail Database</p>
+                Dirt surface trail<br>
+                Hiking, biking, equestrian allowed</p>
+                <p class="data-source">Source: USFS Blanco Ranger District</p>
             </div>
         </div>
 
@@ -471,42 +471,62 @@
     
     <script>
         // Initialize Trail Map
-        const trailMap = L.map('trailMap').setView([39.3847, -105.4483], 12);
+        const trailMap = L.map('trailMap').setView([39.3347, -105.4983], 11);
         
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'USGS, Esri',
             maxZoom: 16
         }).addTo(trailMap);
         
-        // Trail route (approximate based on USGS topo)
-        const trailRoute = [
-            [39.2847, -105.5483],
-            [39.3047, -105.5283],
-            [39.3247, -105.5083],
-            [39.3447, -105.4883],
-            [39.3647, -105.4683],
-            [39.3847, -105.4483]
-        ];
-        
-        L.polyline(trailRoute, {
-            color: '#2c5f2d',
-            weight: 4,
-            opacity: 0.8
-        }).addTo(trailMap);
-        
-        // Trailhead marker
-        L.marker([39.2847, -105.5483]).addTo(trailMap)
-            .bindPopup('<strong>Lost Creek Trailhead</strong><br>Elevation: 8,840 ft');
-        
-        // Lost Lakes marker
-        L.marker([39.3847, -105.4483]).addTo(trailMap)
-            .bindPopup('<strong>Lost Lakes</strong><br>Elevation: 10,640 ft');
-        
-        // Wilderness boundary
-        const wildernessArea = L.rectangle(
-            [[39.25, -105.6], [39.45, -105.4]],
-            {color: '#2c5f2d', weight: 2, fillOpacity: 0.1, dashArray: '10, 10'}
-        ).addTo(trailMap);
+        // Load actual trail data from GeoJSON
+        console.log('Fetching trail data for Lost Creek');
+        fetch('data/filtered_trails.geojson')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Total features loaded:', data.features.length);
+                
+                // Filter for Lost Creek Trail #42 only
+                const lostCreekFeatures = data.features.filter(f => 
+                    f.properties.trail_num === '42'
+                );
+                
+                console.log('Lost Creek Trail #42 segments found:', lostCreekFeatures.length);
+                if (lostCreekFeatures.length === 0) {
+                    console.error('No Lost Creek Trail features found!');
+                    return;
+                }
+                
+                // Create GeoJSON layer for this trail
+                const trailLayer = L.geoJSON({
+                    type: 'FeatureCollection',
+                    features: lostCreekFeatures
+                }, {
+                    style: {
+                        color: '#ffc107',  // Moderate difficulty color
+                        weight: 5,
+                        opacity: 0.9
+                    },
+                    onEachFeature: function(feature, layer) {
+                        layer.bindPopup(`
+                            <strong>${feature.properties.name}</strong><br>
+                            Trail #${feature.properties.trail_num}<br>
+                            Surface: ${feature.properties.surface}
+                        `);
+                    }
+                }).addTo(trailMap);
+                
+                console.log('Trail layer added to map');
+                
+                // Fit map to trail bounds
+                trailMap.fitBounds(trailLayer.getBounds(), { padding: [50, 50] });
+            })
+            .catch(error => {
+                console.error('ERROR loading trail data:', error);
+                alert('Failed to load trail geometry. Check console.');
+            });
         
         // Elevation Profile Chart
         const ctx = document.getElementById('elevationChart').getContext('2d');
@@ -517,8 +537,8 @@
                 datasets: [{
                     label: 'Elevation (feet)',
                     data: [8840, 9100, 9400, 9700, 10100, 10300, 10450, 10580, 10640],
-                    borderColor: '#2c5f2d',
-                    backgroundColor: 'rgba(44, 95, 45, 0.1)',
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
                     fill: true,
                     tension: 0.4,
                     borderWidth: 3

@@ -74,7 +74,7 @@
 
     <div class="trail-detail-hero">
         <div>
-            <h1 style="font-size: 3rem; margin-bottom: 15px;">Wigwam Trail #635</h1>
+            <h1 style="font-size: 3rem; margin-bottom: 15px;">Wigwam Trail #609</h1>
             <p style="font-size: 1.3rem;">Lost Creek Wilderness, Pike National Forest</p>
         </div>
     </div>
@@ -90,23 +90,23 @@
         <div class="trail-info-grid">
             <div class="info-card">
                 <h3><i class="fas fa-route"></i> Distance</h3>
-                <p><strong>6.8 miles</strong> (10.9 km) one-way<br><strong>13.6 miles</strong> round-trip</p>
-                <p class="data-source">Source: USFS Trail Data</p>
+                <p><strong>11.6 miles</strong> (18.7 km) total trail length<br><strong>23.2 miles</strong> round-trip</p>
+                <p class="data-source">Source: COTREX Trail Data</p>
             </div>
             <div class="info-card">
                 <h3><i class="fas fa-chart-line"></i> Elevation</h3>
-                <p><strong>Start:</strong> 9,240 ft (2,816 m)<br><strong>High Point:</strong> 11,840 ft (3,609 m)<br><strong>Gain:</strong> 2,600 ft (792 m)</p>
-                <p class="data-source">Source: USGS 3DEP</p>
+                <p><strong>Low Point:</strong> 8,147 ft (2,483 m)<br><strong>High Point:</strong> 10,180 ft (3,103 m)<br><strong>Total Gain:</strong> 620 ft (189 m)</p>
+                <p class="data-source">Source: USGS 3DEP via COTREX</p>
             </div>
             <div class="info-card">
                 <h3><i class="fas fa-exclamation-triangle"></i> Difficulty</h3>
-                <p><strong>Difficult</strong><br>Technical Rating: Class 2-3<br>Physical Demand: Very Strenuous</p>
-                <p class="data-source">Source: Recreation.gov</p>
+                <p><strong>Difficult</strong><br>Technical Rating: Class 2<br>Physical Demand: Strenuous (length)</p>
+                <p class="data-source">Source: COTREX Database</p>
             </div>
             <div class="info-card">
                 <h3><i class="fas fa-compass"></i> Trail Type</h3>
-                <p><strong>Out & Back</strong><br>Rocky, steep sections<br>Advanced navigation required</p>
-                <p class="data-source">Source: COTREX</p>
+                <p><strong>Out & Back</strong><br>Dirt surface trail<br>Hiking & equestrian use</p>
+                <p class="data-source">Source: USFS South Platte Ranger District</p>
             </div>
         </div>
 
@@ -191,7 +191,7 @@
             </div>
         </section>
 
-        <section style="margin-top: 50px; padding: 30px; background: #fff3cd; border-radius: 15px; border-left: 4px solid #ff9800;">
+        <section style="margin-top: 50px; padding: 30px; background: #ffebee; border-radius: 15px; border-left: 4px solid #f44336;">
             <h2>⚠️ Important Safety Notes</h2>
             <ul style="line-height: 2.2; font-size: 1.05rem;">
                 <li><strong>Lightning Deaths:</strong> 3 fatalities on this trail 2010-2023 (NOAA Storm Data)</li>
@@ -228,19 +228,54 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="config.js"></script>
     <script>
-        const map = L.map('trailMap').setView([39.4156, -105.4192], 13);
+        const map = L.map('trailMap').setView([39.4156, -105.4192], 11);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'USGS, Esri'
+            attribution: 'USGS, Esri',
+            maxZoom: 16
         }).addTo(map);
         
-        const route = [[39.3456, -105.4892], [39.3656, -105.4692], [39.3856, -105.4492], [39.4056, -105.4292], [39.4256, -105.4092], [39.4456, -105.3892]];
-        L.polyline(route, {color: '#f44336', weight: 4}).addTo(map);
-        L.marker([39.3456, -105.4892]).addTo(map).bindPopup('<strong>Trailhead</strong><br>9,240 ft');
-        L.marker([39.4456, -105.3892]).addTo(map).bindPopup('<strong>Summit Area</strong><br>11,840 ft');
-        
-        // Add treeline indicator
-        L.circle([39.3956, -105.4392], {radius: 500, color: '#ffc107', fillOpacity: 0.3}).addTo(map)
-            .bindPopup('<strong>Treeline</strong><br>~11,200 ft');
+        // Load actual trail data from GeoJSON
+        console.log('Fetching trail data for Wigwam');
+        fetch('data/filtered_trails.geojson')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Total features loaded:', data.features.length);
+                // Filter for Wigwam Trail #609 only
+                const wigwamFeatures = data.features.filter(f => 
+                    f.properties.trail_num === '609'
+                );
+                console.log('Wigwam Trail #609 segments found:', wigwamFeatures.length);
+                if (wigwamFeatures.length === 0) { console.error('No Wigwam Trail features found!'); return; }
+                
+                // Create GeoJSON layer for this trail
+                const trailLayer = L.geoJSON({
+                    type: 'FeatureCollection',
+                    features: wigwamFeatures
+                }, {
+                    style: {
+                        color: '#f44336',  // High risk color (red)
+                        weight: 5,
+                        opacity: 0.9
+                    },
+                    onEachFeature: function(feature, layer) {
+                        layer.bindPopup(`
+                            <strong>${feature.properties.name}</strong><br>
+                            Trail #${feature.properties.trail_num}<br>
+                            Surface: ${feature.properties.surface}
+                        `);
+                    }
+                }).addTo(map);
+                
+                // Fit map to trail bounds
+                map.fitBounds(trailLayer.getBounds(), { padding: [50, 50] });
+            })
+            .catch(error => {
+                console.error('ERROR loading trail data:', error);
+                alert('Failed to load trail geometry. Check console.');
+            });
         
         new Chart(document.getElementById('elevationChart'), {
             type: 'line',
